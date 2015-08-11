@@ -6,12 +6,14 @@ class Game(object):
 		              [' ', ' ', ' '],
 		              [' ', ' ', ' ']]
 		self.player = 0
+		self.choice = None
 		
 	def reset(self):
 		self.board = [[' ', ' ', ' '],
 		              [' ', ' ', ' '],
 		              [' ', ' ', ' ']]
 		self.player = 0
+		self.choice = None
 		
 	def print_board(self):
 		print """
@@ -74,17 +76,61 @@ class Game(object):
 	def score(self, gamestate, player):
 		if self.get_winner(gamestate) == PLAYER[player]:
 			return 10
-		elif self.get_winner(gamestate) == PLAYER[(player + 1) % 2]
+		elif self.get_winner(gamestate) == PLAYER[(player + 1) % 2]:
 			return -10
 		return 0
+		
+	def next_gamestate(self, gamestate, player, move):
+		new_gamestate = []
+		for i in range(3):
+			new_gamestate.append(list(gamestate[i]))
+		new_gamestate[move[0]][move[1]] = PLAYER[player]
+		return new_gamestate
+		
+	def minimax(self, gamestate, minimax_player, active_player):
+		"""
+		if game_over:
+			return score
+		legal_moves = get_legal_moves
+		scores = [0 for move in legal_moves]
+		for i in range(len(legal_moves)):
+			scores[i] = minimax(next_gamestate(legal_moves[i]))
+		# We now have the list of moves and their corresponding list of scores
+		# How do we tell the A.I. what move to make based on the scores?
+		if minimax_player == active_player:
+			self.choice = legal_moves(scores.index(max(scores)))
+			return max(scores)
+		else if minimax_player == active_player:
+			self.choice = legal_moves(scores.index(min(scores)))
+			return min(scores)
+		"""
+		if self.game_over(gamestate):
+			return self.score(gamestate, minimax_player)
+		legal_moves = self.get_legal_moves(gamestate)
+		scores = [0 for move in legal_moves]
+		for i in range(len(legal_moves)):
+			scores[i] = self.minimax(self.next_gamestate(gamestate, active_player, legal_moves[i]), minimax_player, (active_player + 1) % 2)
+		if minimax_player == active_player:
+			self.choice = legal_moves[scores.index(max(scores))]
+			return max(scores)
+		else:
+			self.choice = legal_moves[scores.index(min(scores))]
+			return min(scores)
+			
+	def make_choice_move(self):
+		self.move(self.choice[0], self.choice[1])
 	
 while True:
 	g = Game()
 	while not g.game_over(g.board):
 		g.print_board()
-		row = int(raw_input())
-		col = int(raw_input())
-		g.move(row, col)
+		if g.player == 1: # 0 -> computer plays X's, 1 -> computer plays O's
+			g.minimax(g.board, 1, 1)
+			g.make_choice_move()
+		else:
+			row = int(raw_input())
+			col = int(raw_input())
+			g.move(row, col)
 	g.print_board()
 	if g.get_winner(g.board) != "D":
 		print "%c Wins!" % g.get_winner(g.board)
